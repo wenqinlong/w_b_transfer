@@ -6,7 +6,7 @@ import tfrecord
 
 # Hyperparameters
 BATCH_SIZE = 128
-EPOCH = 5000
+EPOCH = 2
 LR = 1e-5
 cwd = '/home/qinlong/PycharmProjects/NEU/w_b_transfer/w_data/'
 
@@ -21,33 +21,48 @@ test_dataset = tfrecord.read_tfrecord(cwd + 'train_data.tfrecord', BATCH_SIZE)
 r_spec = tf.placeholder(tf.float32, shape=[BATCH_SIZE, 603], name='r_spec')
 p_spec = fn.fw_net(x_para)
 loss = ms.huber_loss(r_spec, p_spec)
+tf.summary.scalar('loss', loss)
 
 # optimizer
 optimizer = tf.train.AdamOptimizer(learning_rate=LR,
                                    beta1=0.9,
                                    beta2=0.999,
                                    epsilon=1e-8)
-var_list = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope='fw_net')
+
+# var_list = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope='fw_net')
 
 # minimize
-fw_op = optimizer.minimize(loss=loss, var_list=var_list)
+fw_op = optimizer.minimize(loss=loss)
 
 # start training
 init = tf.global_variables_initializer()
 
-with tf.Session(config=tf.ConfigProto(log_device_placement=True)) as sess:
+config = tf.ConfigProto()
+config.gpu_options.per_process_gpu_memory_fraction = 0.8
+
+with tf.Session(config=config) as sess:
     sess.run(init)
-    loss_ = []
+
+    merged_summary = tf.summary.merge_all()
+    writer = tf.summary.FileWriter('./gpaphs', tf.get_default_graph())
+    writer.add_graph(sess.graph)
+
     epoch = 0
-    it_ = []
 
     for it in range(EPOCH*(30513//BATCH_SIZE)):
         pa, id, sp = sess.run([parameter, index, spectra])
-        _, l = sess.run([fw_op, loss], feed_dict={x_para: pa, r_spec: sp})  # _, loss = sess.run([fw_op, loss], feed_dict={x_para: pa, r_spec: sp})
-        loss_.append(l)                                                     # TypeError: Fetch argument 0.022959469 has invalid type <class 'numpy.float32'>, must be a string or Tensor. (Can not convert a float32 into a Tensor or Operation.)
 
-        it_.append(it)
+        s = sess.run(merged_summary, feed_dict={x_para: pa, r_spec: sp})
+        writer.add_summary(s, it)
+
+        _, l = sess.run([fw_op, loss], feed_dict={x_para: pa, r_spec: sp})  # _, loss = sess.run([fw_op, loss], feed_dict={x_para: pa, r_spec: sp})
 
         if (it+1) % 238 == 0:
             epoch += 1
             print('Epoch_{}, Iteration_{}, loss: {}'.format(epoch, it, l))
+
+
+writer.close()
+
+# tensorboard --logdir='/home/qinlong/PycharmProjects/NEU/w_b_transfer/w_data' --port=8008
+# Don't enter the graphs folder, don't add spaces before and after '='
