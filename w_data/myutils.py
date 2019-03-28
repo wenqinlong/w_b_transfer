@@ -61,3 +61,8 @@ def data_norm(x, para, reverse=False):
 def mse_loss(y, y_):
     loss = tf.losses.mean_squared_error(y, y_)
     return loss
+
+
+def huber_loss(y, y_, delta=0.1):
+    loss = tf.losses.huber_loss(y_, y, delta)
+    return loss
