@@ -47,8 +47,11 @@ def data_norm(x, para, reverse=False):
     elif para == 'bottom_spacer':
         max = 600
         min = 200
-    else:                           # para = 'angle'
+    elif para == 'angle':
         max = 180
+        min = 0
+    else:
+        max = 1
         min = 0
 
     if not reverse:

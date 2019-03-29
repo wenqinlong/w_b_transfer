@@ -9,8 +9,7 @@ os.makedirs('./data/train', exist_ok=True)
 os.makedirs('./data/test_norm', exist_ok=True)
 os.makedirs('./data/train_norm', exist_ok=True)
 
-
-cwd = '/home/qinlong/PycharmProjects/NEU/w_data/'
+cwd = '/home/qinlong/PycharmProjects/NEU/w_b_transfer/w_data/'
 para = ['top_length', 'bottom_length', 'top_spacer', 'bottom_spacer', 'angle']
 data_point = ['data' + str(i) for i in range(201)]
 
@@ -48,7 +47,7 @@ train_LL_norm = deepcopy(train_LL)
 train_LR_norm = deepcopy(train_LR)
 train_RR_norm = deepcopy(train_RR)
 
-for i in para:
+for i in para+data_point:
     test_LL_norm[i] = data_norm(test_LL_norm[i], i)
     test_LR_norm[i] = data_norm(test_LR_norm[i], i)
     test_RR_norm[i] = data_norm(test_RR_norm[i], i)
