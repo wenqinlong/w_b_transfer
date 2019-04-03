@@ -23,7 +23,8 @@ def tfrecord(path, out):
         spec_LL = LL_norm.loc[index][6:]
         spec_LR = LR_norm.loc[index][6:]
         spec_RR = RR_norm.loc[index][6:]
-        spec = np.concatenate([spec_LL, spec_LR, spec_RR], axis=0)
+        # print(spec_RR.shape)    # (201,)
+        spec = np.concatenate([spec_LL, spec_LR, spec_RR], axis=0)   # (201,), so the axis = 0
 
         example = tf.train.Example(features=tf.train.Features(feature={                          # tf.train.Example
             'para': tf.train.Feature(float_list=tf.train.FloatList(value=[i for i in para])),    # float
@@ -63,15 +64,16 @@ def read_tfrecord(fn, batch_size):
 
 
 if __name__ == '__main__':
-    CWD = '/home/qinlong/PycharmProjects/NEU/wei_data_practice/'
-    # tfrecord(CWD+'data/test_norm/', 'test_data.tfrecord')
-    # tfrecord(CWD+'data/train_norm/', 'train_data.tfrecord')
+    CWD = '/home/qinlong/PycharmProjects/NEU/w_b_transfer/w_data/'
+    tfrecord(CWD+'data/test_norm/', 'test_data.tfrecord')
+    tfrecord(CWD+'data/train_norm/', 'train_data.tfrecord')
 
     para_batch, label_batch, spec_batch = read_tfrecord(CWD + 'test_data.tfrecord', 2)
 
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
-        for i in range(5):
+        for i in range(2):
             p, l, s = sess.run([para_batch, label_batch, spec_batch])
             #para_batch, label_batch, spec_batch = sess.run([para_batch, label_batch, spec_batch])
-            print(p, l, s)
+            print(s.shape)
+            print(l)

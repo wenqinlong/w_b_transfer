@@ -3,10 +3,12 @@ import tensorflow as tf
 import pandas as pd
 import myutils as ms
 import tfrecord
+import numpy as np
+import os
 
 # Hyperparameters
 BATCH_SIZE = 128
-EPOCH = 2
+EPOCH = 1
 LR = 1e-5
 cwd = '/home/qinlong/PycharmProjects/NEU/w_b_transfer/w_data/'
 
@@ -42,7 +44,7 @@ test_summary = tf.summary.scalar('Test loss', loss)
 config = tf.ConfigProto()
 config.gpu_options.per_process_gpu_memory_fraction = 0.8
 
-builder = tf.saved_model.builder.SavedModelBuilder('./model')
+# builder = tf.saved_model.builder.SavedModelBuilder('./saved_model')
 
 with tf.Session(config=config) as sess:
     sess.run(init)
@@ -62,23 +64,38 @@ with tf.Session(config=config) as sess:
             epoch += 1
             print('Epoch_{}, Iteration_{}, loss: {}'.format(epoch, it, l))
 
-    for i in range(5000//64):
+    # create dirs and store the test results
+    os.makedirs('./test_results/real', exist_ok=True)  # there is no '/' in the last dir
+    os.makedirs('./test_results/pred', exist_ok=True)
+    real_data = np.empty((0, 609))   # create a empty ndarray shape = (0, ?)
+    pred_data = np.empty((0, 609))
+
+    for i in range(5000//BATCH_SIZE):
         pa_te, id_te, sp_te = sess.run([para_test, id_test, sp_test])
 
         p_spec_test, summary_te, l_test = sess.run([p_spec, test_summary, loss],
                                                    feed_dict={x_para: pa_te, r_spec: sp_te})
         test_writer.add_summary(summary_te, i)
 
-        if (i+1) % 10 == 0:
-            print('Iteration_{}, loss: {}'.format(i, l_test))
+        # if (i+1) % 10 == 0:
+        #     # print('Iteration_{}, loss: {}'.format(i, l_test))
+
+        real_results = np.concatenate([id_te, pa_te, sp_te], axis=1)    # (128, 609)
+        pred_results = np.concatenate([id_te, pa_te, p_spec_test], axis=1)
+
+        real_data = np.concatenate([real_data, real_results], axis=0)
+        pred_data = np.concatenate([pred_data, pred_results], axis=0)
+
+    np.savetxt('test_results/real/real_data.csv', real_data, delimiter=',')  # don't forget about the delimiter=','
+    np.savetxt('test_results/pred/pred_data.csv', pred_data, delimiter=',')
 
     # save the model
 
-    builder.add_meta_graph(
-        sess,
-        [tf.saved_model.tag_constants.SERVING],
-    )
-    builder.save()
+#     builder.add_meta_graph(
+#         sess,
+#         [tf.saved_model.tag_constants.SERVING],
+#     )
+#     builder.save()
 
 
 train_writer.close()
