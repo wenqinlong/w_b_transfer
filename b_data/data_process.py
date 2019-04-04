@@ -51,6 +51,7 @@ data.iloc[:, 204:404] = 2 * data.iloc[:, 204:404] + 1
 data.to_csv('./data/raw_data/data_norm.csv')
 
 # add a 0 column to phase and ref
-data.insert(204, 'add_ph_0', 0)
+data.insert(5, 'add_para', 0)
+data.insert(205, 'add_ph_0', 0)
 data['add_ref_0'] = 0
-data.to_csv('data/raw_data/data_padding_406.csv')     # [8393 rows x 406 columns]
+data.to_csv('data/raw_data/data_norm_padding_407.csv')     # [8393 rows x 407 columns]
