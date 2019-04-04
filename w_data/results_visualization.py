@@ -9,7 +9,6 @@ data_point = ['data' + str(i) for i in range(603)]
 freq = np.arange(30, 80.25, 0.25)  # shape: (201,)
 
 
-
 def fw_visual(real, pred, frequency, path):
     for i in para+data_point:
         real[i] = data_norm(real[i], i, reverse=True)
