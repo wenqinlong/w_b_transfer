@@ -8,7 +8,7 @@ import os
 
 # Hyperparameters
 BATCH_SIZE = 128
-EPOCH = 2000
+EPOCH = 700
 LR = 1e-5
 cwd = '/home/qinlong/PycharmProjects/NEU/w_b_transfer/w_data/'
 
@@ -42,7 +42,7 @@ test_summary = tf.summary.scalar('Test loss', loss)
 # merged_summary = tf.summary.merge_all()  # if want the train and test loss in the same image, then uncomment this line
 
 config = tf.ConfigProto()
-config.gpu_options.per_process_gpu_memory_fraction = 0.8
+config.gpu_options.per_process_gpu_memory_fraction = 0.85
 
 with tf.Session(config=config) as sess:
     sess.run(init)

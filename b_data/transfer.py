@@ -1,5 +1,8 @@
 import tensorflow as tf
 import tfrecord as tfr
+import myutils as ms
+import os
+import numpy as np
 
 # Hyperparameter
 BATCH_SIZE = 128
@@ -8,8 +11,8 @@ EPOCH = 2
 CWD = '/home/qinlong/PycharmProjects/NEU/w_b_transfer/'
 
 # Read data
-test_para, test_ref = tfr.read_tfrecord('./test_2000.tfrecord', BATCH_SIZE)
-train, train_ref = tfr.read_tfrecord('./train_2000.tfrecord', BATCH_SIZE)
+test_para, test_rp = tfr.read_tfrecord('./test_2000.tfrecord', BATCH_SIZE)
+train_para, train_rp = tfr.read_tfrecord('./train_2000.tfrecord', BATCH_SIZE)
 
 graph = tf.Graph()
 signature_key = tf.saved_model.signature_constants.DEFAULT_SERVING_SIGNATURE_DEF_KEY
@@ -17,6 +20,8 @@ x_key = 'x_input'
 y_key = 'y_output'
 
 export_dir = CWD + 'w_data/savemodel'
+
+y_ = tf.placeholder(tf.float32, shape=[BATCH_SIZE, 402], name='real')
 
 with tf.Session() as sess:
     meta_graph_def = tf.saved_model.loader.load(
@@ -34,5 +39,92 @@ with tf.Session() as sess:
     connect = sess.graph.get_operation_by_name('fw_net/identical_conv3/relu_4').outputs[0]
 
     with tf.name_scope('trans_part'):
+        with tf.name_scope('t_conv3'):
+            t = ms.t_conv2d(connect, 32, [2, 2], 2)
+            # x = ms.bn(x)
+            t = ms.activation(t, relu=True)
 
+        with tf.name_scope('identical_conv4'):
+            t = ms.conv(t, 32, [3, 3])
+            # x = ms.bn(x, training=training)
+            t = ms.activation(t, relu=True)
+
+            t = ms.conv(t, 32, [3, 3])
+            # x = ms.bn(x, training=training)
+            t = ms.activation(t, relu=True)
+
+            t = ms.conv(t, 32, [3, 3])
+            # x = ms.bn(x, training=training)
+            t = ms.activation(t, relu=True)
+
+            t = ms.conv(t, 32, [3, 3])
+            # x = ms.bn(x, training=training)
+            t = ms.activation(t, relu=True)
+
+            t = ms.conv(t, 32, [3, 3])
+            # x = ms.bn(x, training=training)
+            t = ms.activation(t, relu=True)
+
+        t = tf.reshape(t, [-1, 40 * 40 * 32])
+
+        with tf.name_scope('fc2'):
+            t = ms.fc(t, units=402)
+            # x = ms.bn(x, training=training)
+            t = ms.activation(t, relu=False)
+
+    new_loss = ms.huber_loss(t, y_)
+    new_optimizer = tf.train.AdamOptimizer(learning_rate=LR,
+                                           beta1=0.9,
+                                           beta2=0.999,
+                                           epsilon=1e-8,
+                                           name='new_adam')
+
+    new_op = new_optimizer.minimize(loss=new_loss)
+
+    var = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope='trans_part')
+
+    sess.run(tf.variables_initializer(var_list=[var, new_optimizer.variables()]))
+
+    # summary tensorboard
+    train_summary = tf.summary.scalar('Train loss', new_loss)
+    test_summary = tf.summary.scalar('Test loss', new_loss)
+    train_writer = tf.summary.FileWriter('./graphs/train', tf.get_default_graph())
+    test_writer = tf.summary.FileWriter('./graphs/test')
+
+    # start train
+    epoch = 0
+    for it in range(EPOCH * (6393 // BATCH_SIZE)):
+        tr_para, tr_rp = sess.run([train_para, train_rp])
+        summary_tr, _, l = sess.run([train_summary, new_op, new_loss],
+                                    feed_dict={x: tr_para, y_: tr_rp})  # _, loss = sess.run([fw_op, loss], feed_dict={x_para: pa, r_spec: sp})
+        train_writer.add_summary(summary_tr, it)
+
+        if (it + 1) % 98 == 0:
+            epoch += 2
+            print('Epoch_{}, Iteration_{}, loss: {}'.format(epoch, it, l))
+
+        # create dirs and store the test results
+    os.makedirs('./test_results/real', exist_ok=True)  # there is no '/' in the last dir
+    os.makedirs('./test_results/pred', exist_ok=True)
+    real_data = np.empty((0, 402))                     # create a empty ndarray shape = (0, ?)
+    pred_data = np.empty((0, 402))
+
+    for i in range(2000 // BATCH_SIZE):
+        te_para, te_rp = sess.run([test_para, test_rp])
+
+        p_te_rp, summary_te, l_test = sess.run([t, test_summary, new_loss],
+                                               feed_dict={x: te_para, y_: sp_te})
+        test_writer.add_summary(summary_te, i)
+
+        simu_results = np.concatenate([te_para, te_rp], axis=1)  # (128, 402)
+        pred_results = np.concatenate([te_para, p_te_rp], axis=1)
+
+        real_data = np.concatenate([real_data, simu_results], axis=0)
+        pred_data = np.concatenate([pred_data, pred_results], axis=0)
+
+    np.savetxt('test_results/real/real_data.csv', real_data, delimiter=',')  # don't forget about the delimiter=','
+    np.savetxt('test_results/pred/pred_data.csv', pred_data, delimiter=',')
+
+train_writer.close()
+test_writer.close()
 
