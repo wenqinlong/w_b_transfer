@@ -8,7 +8,7 @@ import os
 
 # Hyperparameters
 BATCH_SIZE = 128
-EPOCH = 1
+EPOCH = 2000
 LR = 1e-5
 cwd = '/home/qinlong/PycharmProjects/NEU/w_b_transfer/w_data/'
 
