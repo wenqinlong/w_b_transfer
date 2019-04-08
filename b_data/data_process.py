@@ -1,6 +1,5 @@
 import pandas as pd
 import os
-from random import sample
 import numpy as np
 
 os.makedirs('./data/test_2000', exist_ok=True)

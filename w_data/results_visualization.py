@@ -13,7 +13,7 @@ def fw_visual(real, pred, frequency, path):
     for i in para+data_point:
         real[i] = data_norm(real[i], i, reverse=True)
         pred[i] = data_norm(pred[i], i, reverse=True)
-    for j in range(2):
+    for j in range(4992):
         real_LL = real.iloc[j, 6:207]
         real_LR = real.iloc[j, 207:408]
         real_RR = real.iloc[j, 408:609]      # Length: 201, dtype: float64
@@ -24,7 +24,7 @@ def fw_visual(real, pred, frequency, path):
         pred_RR = pred.iloc[j, 408:609]  # Length: 201, dtype: float64
         # print(pred.iloc[j, 0:6]==real.iloc[j, 0:6])     # True, it means the data is correct.
 
-        fig, ax = plt.subplots(nrows=1, ncols=3, figsize=(12, 4))
+        fig, ax = plt.subplots(nrows=1, ncols=3, figsize=(14, 4))
         pred_ = [pred_LL, pred_LR, pred_RR]
         real_ = [real_LL, real_LR, real_RR]
         ref = ['LL', 'LR', 'RR']
@@ -37,8 +37,8 @@ def fw_visual(real, pred, frequency, path):
             ax[k].set_ylabel('Reflectance')
             ax[k].set_ylim(0,1)
 
-        plt.savefig(path+'./pred_simu_{}'.format(j), dpi=150)
-        plt.show()
+        plt.savefig(path+'./pred_simu_{}'.format(j), dpi=100)
+        # plt.show()
 
 
 if __name__ == '__main__':

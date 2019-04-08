@@ -5,10 +5,11 @@ import myutils as ms
 import tfrecord
 import numpy as np
 import os
+import shutil
 
 # Hyperparameters
 BATCH_SIZE = 128
-EPOCH = 700
+EPOCH = 2000
 LR = 1e-5
 cwd = '/home/qinlong/PycharmProjects/NEU/w_b_transfer/w_data/'
 
@@ -48,7 +49,9 @@ with tf.Session(config=config) as sess:
     sess.run(init)
 
     # Save model
-    export_dir = './savedmodel'
+    export_dir = './savedmodel_1'
+    if os.path.exists(export_dir):
+        shutil.rmtree(export_dir)
     builder = tf.saved_model.builder.SavedModelBuilder(export_dir)
 
     tensor_info_x = tf.saved_model.utils.build_tensor_info(x)
@@ -63,7 +66,7 @@ with tf.Session(config=config) as sess:
     )
 
     builder.add_meta_graph_and_variables(
-        sess, tf.saved_model.tag_constants.SERVING,
+        sess, [tf.saved_model.tag_constants.SERVING],    # []
         signature_def_map={
             tf.saved_model.signature_constants.DEFAULT_SERVING_SIGNATURE_DEF_KEY:
                 prediction_signature

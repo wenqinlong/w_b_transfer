@@ -12,65 +12,69 @@ CWD = '/home/qinlong/PycharmProjects/NEU/w_b_transfer/'
 
 # Read data
 test_para, test_rp = tfr.read_tfrecord('./test_2000.tfrecord', BATCH_SIZE)
-train_para, train_rp = tfr.read_tfrecord('./train_2000.tfrecord', BATCH_SIZE)
+train_para, train_rp = tfr.read_tfrecord('./train_6393.tfrecord', BATCH_SIZE)
 
 graph = tf.Graph()
 signature_key = tf.saved_model.signature_constants.DEFAULT_SERVING_SIGNATURE_DEF_KEY
 x_key = 'x_input'
-y_key = 'y_output'
+# y_key = 'y_output'
 
-export_dir = CWD + 'w_data/savemodel'
+export_dir = CWD + 'w_data/savedmodel_1'
 
 y_ = tf.placeholder(tf.float32, shape=[BATCH_SIZE, 402], name='real')
 
 with tf.Session() as sess:
     meta_graph_def = tf.saved_model.loader.load(
-        sess, [tf.saved_model.tag_costants.SERVING],
+        sess, [tf.saved_model.tag_constants.SERVING],
         export_dir
     )
 
     signature = meta_graph_def.signature_def
     x_tensor_name = signature[signature_key].inputs[x_key].name
-    y_tensor_name = signature[signature_key].inputs[y_key].name
+    # y_tensor_name = signature[signature_key].inputs[y_key].name
 
     x = sess.graph.get_tensor_by_name(x_tensor_name)
-    y = sess.graph.get_tensor_by_name(y_tensor_name)
+    # y = sess.graph.get_tensor_by_name(y_tensor_name)
 
-    connect = sess.graph.get_operation_by_name('fw_net/identical_conv3/relu_4').outputs[0]
+    connect = sess.graph.get_operation_by_name('fw_net/fw_net/identical_conv3/identical_conv3/relu_4').outputs[0]
 
     with tf.name_scope('trans_part'):
-        with tf.name_scope('t_conv3'):
-            t = ms.t_conv2d(connect, 32, [2, 2], 2)
-            # x = ms.bn(x)
-            t = ms.activation(t, relu=True)
+        with tf.variable_scope('trans_part'):
+            with tf.name_scope('t_conv3'):
+                with tf.variable_scope('t_conv3'):
+                    t = ms.t_conv2d(connect, 32, [2, 2], 2)
+                    # x = ms.bn(x)
+                    t = ms.activation(t, relu=True)
 
-        with tf.name_scope('identical_conv4'):
-            t = ms.conv(t, 32, [3, 3])
-            # x = ms.bn(x, training=training)
-            t = ms.activation(t, relu=True)
+            with tf.name_scope('identical_conv4'):
+                with tf.variable_scope('identical_conv4'):
+                    t = ms.conv(t, 32, [3, 3])
+                    # x = ms.bn(x, training=training)
+                    t = ms.activation(t, relu=True)
 
-            t = ms.conv(t, 32, [3, 3])
-            # x = ms.bn(x, training=training)
-            t = ms.activation(t, relu=True)
+                    t = ms.conv(t, 32, [3, 3])
+                    # x = ms.bn(x, training=training)
+                    t = ms.activation(t, relu=True)
 
-            t = ms.conv(t, 32, [3, 3])
-            # x = ms.bn(x, training=training)
-            t = ms.activation(t, relu=True)
+                    t = ms.conv(t, 32, [3, 3])
+                    # x = ms.bn(x, training=training)
+                    t = ms.activation(t, relu=True)
 
-            t = ms.conv(t, 32, [3, 3])
-            # x = ms.bn(x, training=training)
-            t = ms.activation(t, relu=True)
+                    t = ms.conv(t, 32, [3, 3])
+                    # x = ms.bn(x, training=training)
+                    t = ms.activation(t, relu=True)
 
-            t = ms.conv(t, 32, [3, 3])
-            # x = ms.bn(x, training=training)
-            t = ms.activation(t, relu=True)
+                    t = ms.conv(t, 32, [3, 3])
+                    # x = ms.bn(x, training=training)
+                    t = ms.activation(t, relu=True)
 
-        t = tf.reshape(t, [-1, 40 * 40 * 32])
+            t = tf.reshape(t, [-1, 40 * 40 * 32])
 
-        with tf.name_scope('fc2'):
-            t = ms.fc(t, units=402)
-            # x = ms.bn(x, training=training)
-            t = ms.activation(t, relu=False)
+            with tf.name_scope('fc2'):
+                with tf.variable_scope('fc2'):
+                    t = ms.fc(t, units=402)
+                    # x = ms.bn(x, training=training)
+                    t = ms.activation(t, relu=False)
 
     new_loss = ms.huber_loss(t, y_)
     new_optimizer = tf.train.AdamOptimizer(learning_rate=LR,
@@ -83,7 +87,8 @@ with tf.Session() as sess:
 
     var = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope='trans_part')
 
-    sess.run(tf.variables_initializer(var_list=[var, new_optimizer.variables()]))
+    sess.run(tf.variables_initializer(var_list=var))
+    sess.run(tf.variables_initializer(new_optimizer.variables()))
 
     # summary tensorboard
     train_summary = tf.summary.scalar('Train loss', new_loss)
@@ -106,17 +111,17 @@ with tf.Session() as sess:
         # create dirs and store the test results
     os.makedirs('./test_results/real', exist_ok=True)  # there is no '/' in the last dir
     os.makedirs('./test_results/pred', exist_ok=True)
-    real_data = np.empty((0, 402))                     # create a empty ndarray shape = (0, ?)
-    pred_data = np.empty((0, 402))
+    real_data = np.empty((0, 407))                     # create a empty ndarray shape = (0, ?)
+    pred_data = np.empty((0, 407))
 
     for i in range(2000 // BATCH_SIZE):
         te_para, te_rp = sess.run([test_para, test_rp])
 
         p_te_rp, summary_te, l_test = sess.run([t, test_summary, new_loss],
-                                               feed_dict={x: te_para, y_: sp_te})
+                                               feed_dict={x: te_para, y_: te_rp})
         test_writer.add_summary(summary_te, i)
 
-        simu_results = np.concatenate([te_para, te_rp], axis=1)  # (128, 402)
+        simu_results = np.concatenate([te_para, te_rp], axis=1)  # (128, 407)
         pred_results = np.concatenate([te_para, p_te_rp], axis=1)
 
         real_data = np.concatenate([real_data, simu_results], axis=0)
@@ -127,4 +132,3 @@ with tf.Session() as sess:
 
 train_writer.close()
 test_writer.close()
-
