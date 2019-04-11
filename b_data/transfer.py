@@ -7,7 +7,7 @@ import numpy as np
 # Hyperparameter
 BATCH_SIZE = 128
 LR = 1E-5
-EPOCH = 2
+EPOCH = 2000
 CWD = '/home/qinlong/PycharmProjects/NEU/w_b_transfer/'
 
 # Read data
@@ -21,7 +21,7 @@ x_key = 'x_input'
 
 export_dir = CWD + 'w_data/savedmodel_1'
 
-y_ = tf.placeholder(tf.float32, shape=[BATCH_SIZE, 402], name='real')
+y_ = tf.placeholder(tf.float32, shape=[BATCH_SIZE, 402], name='simu')
 
 with tf.Session() as sess:
     meta_graph_def = tf.saved_model.loader.load(
@@ -108,27 +108,28 @@ with tf.Session() as sess:
             epoch += 2
             print('Epoch_{}, Iteration_{}, loss: {}'.format(epoch, it, l))
 
-        # create dirs and store the test results
-    os.makedirs('./test_results/real', exist_ok=True)  # there is no '/' in the last dir
-    os.makedirs('./test_results/pred', exist_ok=True)
-    real_data = np.empty((0, 407))                     # create a empty ndarray shape = (0, ?)
-    pred_data = np.empty((0, 407))
+            # create dirs and store the test results
+        if (epoch + 1) % 500 == 0:
+            os.makedirs('./test_results/epoch_{}'.format(epoch), exist_ok=True)  # there is no '/' in the last dir
+            os.makedirs('./test_results/epoch_{}'.format(epoch), exist_ok=True)
+            simu_data = np.empty((0, 407))                     # create a empty ndarray shape = (0, ?)
+            pred_data = np.empty((0, 407))
 
-    for i in range(2000 // BATCH_SIZE):
-        te_para, te_rp = sess.run([test_para, test_rp])
+            for i in range(2000 // BATCH_SIZE):
+                te_para, te_rp = sess.run([test_para, test_rp])
 
-        p_te_rp, summary_te, l_test = sess.run([t, test_summary, new_loss],
-                                               feed_dict={x: te_para, y_: te_rp})
-        test_writer.add_summary(summary_te, i)
+                p_te_rp, summary_te, l_test = sess.run([t, test_summary, new_loss],
+                                                       feed_dict={x: te_para, y_: te_rp})
+                test_writer.add_summary(summary_te, i)
 
-        simu_results = np.concatenate([te_para, te_rp], axis=1)  # (128, 407)
-        pred_results = np.concatenate([te_para, p_te_rp], axis=1)
+                simu_results = np.concatenate([te_para, te_rp], axis=1)  # (128, 407)
+                pred_results = np.concatenate([te_para, p_te_rp], axis=1)
 
-        real_data = np.concatenate([real_data, simu_results], axis=0)
-        pred_data = np.concatenate([pred_data, pred_results], axis=0)
+                simu_data = np.concatenate([simu_data, simu_results], axis=0)
+                pred_data = np.concatenate([pred_data, pred_results], axis=0)
 
-    np.savetxt('test_results/real/real_data.csv', real_data, delimiter=',')  # don't forget about the delimiter=','
-    np.savetxt('test_results/pred/pred_data.csv', pred_data, delimiter=',')
+            np.savetxt('test_results/epoch_{}/simu_data.csv'.format(epoch), simu_data, delimiter=',')  # don't forget about the delimiter=','
+            np.savetxt('test_results/epoch_{}/pred_data.csv'.format(epoch), pred_data, delimiter=',')
 
 train_writer.close()
 test_writer.close()
