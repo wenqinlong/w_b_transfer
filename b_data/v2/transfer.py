@@ -11,15 +11,15 @@ EPOCH = 2000
 CWD = '/home/qinlong/PycharmProjects/NEU/w_b_transfer/'
 
 # Read data
-test_para, test_rp = tfr.read_tfrecord('./test_2000.tfrecord', BATCH_SIZE)
-train_para, train_rp = tfr.read_tfrecord('./train_6393.tfrecord', BATCH_SIZE)
+test_para, test_rp = tfr.read_tfrecord(CWD + 'b_data/test_2000.tfrecord', BATCH_SIZE)
+train_para, train_rp = tfr.read_tfrecord(CWD + 'b_data/train_6393.tfrecord', BATCH_SIZE)
 
 graph = tf.Graph()
 signature_key = tf.saved_model.signature_constants.DEFAULT_SERVING_SIGNATURE_DEF_KEY
 x_key = 'x_input'
 # y_key = 'y_output'
 
-export_dir = CWD + 'w_data/savedmodel_1'
+export_dir = CWD + 'w_data/v2/savedmodel_1'
 
 y_ = tf.placeholder(tf.float32, shape=[BATCH_SIZE, 402], name='simu')
 
@@ -36,45 +36,38 @@ with tf.Session() as sess:
     x = sess.graph.get_tensor_by_name(x_tensor_name)
     # y = sess.graph.get_tensor_by_name(y_tensor_name)
 
-    connect = sess.graph.get_operation_by_name('fw_net/fw_net/identical_conv3/identical_conv3/relu_4').outputs[0]
+    connect = sess.graph.get_operation_by_name('fw_net/identical_conv3/relu_3').outputs[0]
 
     with tf.name_scope('trans_part'):
         with tf.variable_scope('trans_part'):
-            with tf.name_scope('t_conv3'):
-                with tf.variable_scope('t_conv3'):
-                    t = ms.t_conv2d(connect, 32, [2, 2], 2)
-                    # x = ms.bn(x)
-                    t = ms.activation(t, relu=True)
+            with tf.variable_scope('t_conv3'):
+                t = ms.t_conv2d(connect, 32, [2, 2], 2)
+                # x = ms.bn(x)
+                t = ms.activation(t, relu=True)
 
-            with tf.name_scope('identical_conv4'):
-                with tf.variable_scope('identical_conv4'):
-                    t = ms.conv(t, 32, [3, 3])
-                    # x = ms.bn(x, training=training)
-                    t = ms.activation(t, relu=True)
+            with tf.variable_scope('identical_conv4'):
+                t = ms.conv(t, 32, [3, 3])
+                # x = ms.bn(x, training=training)
+                t = ms.activation(t, relu=True)
 
-                    t = ms.conv(t, 32, [3, 3])
-                    # x = ms.bn(x, training=training)
-                    t = ms.activation(t, relu=True)
+                t = ms.conv(t, 32, [3, 3])
+                # x = ms.bn(x, training=training)
+                t = ms.activation(t, relu=True)
 
-                    t = ms.conv(t, 32, [3, 3])
-                    # x = ms.bn(x, training=training)
-                    t = ms.activation(t, relu=True)
+                t = ms.conv(t, 32, [3, 3])
+                # x = ms.bn(x, training=training)
+                t = ms.activation(t, relu=True)
 
-                    t = ms.conv(t, 32, [3, 3])
-                    # x = ms.bn(x, training=training)
-                    t = ms.activation(t, relu=True)
-
-                    t = ms.conv(t, 32, [3, 3])
-                    # x = ms.bn(x, training=training)
-                    t = ms.activation(t, relu=True)
+                t = ms.conv(t, 32, [3, 3])
+                # x = ms.bn(x, training=training)
+                t = ms.activation(t, relu=True)
 
             t = tf.reshape(t, [-1, 40 * 40 * 32])
 
-            with tf.name_scope('fc2'):
-                with tf.variable_scope('fc2'):
-                    t = ms.fc(t, units=402)
-                    # x = ms.bn(x, training=training)
-                    t = ms.activation(t, relu=False)
+            with tf.variable_scope('fc2'):
+                t = ms.fc(t, units=402)
+                # x = ms.bn(x, training=training)
+                t = ms.activation(t, relu=False)
 
     new_loss = ms.huber_loss(t, y_)
     new_optimizer = tf.train.AdamOptimizer(learning_rate=LR,
@@ -104,12 +97,12 @@ with tf.Session() as sess:
                                     feed_dict={x: tr_para, y_: tr_rp})  # _, loss = sess.run([fw_op, loss], feed_dict={x_para: pa, r_spec: sp})
         train_writer.add_summary(summary_tr, it)
 
-        if (it + 1) % 98 == 0:
-            epoch += 2
-            print('Epoch_{}, Iteration_{}, loss: {}'.format(epoch, it, l))
+        if (it + 1) % 49 == 0:
+            epoch += 1
 
-            # create dirs and store the test results
-        if (epoch + 1) % 500 == 0:
+        # create dirs and store the test results
+        if ((it + 1) % (49 * 500)) == 0:
+            print('Epoch_{}, Iteration_{}, loss: {}'.format(epoch, it, l))
             os.makedirs('./test_results/epoch_{}'.format(epoch), exist_ok=True)  # there is no '/' in the last dir
             os.makedirs('./test_results/epoch_{}'.format(epoch), exist_ok=True)
             simu_data = np.empty((0, 407))                     # create a empty ndarray shape = (0, ?)

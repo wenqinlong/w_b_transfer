@@ -18,7 +18,7 @@ def denorm(x):
 
 def fw_visual(simu, pred, frequency, path, epoch):
 
-    for j in range(2):
+    for j in range(20):
         simu_phase = simu.iloc[j, 5:205]
         simu_ref = simu.iloc[j, 206:406]
 
@@ -31,7 +31,6 @@ def fw_visual(simu, pred, frequency, path, epoch):
         rp = ['phase', 'reflectance']
 
         for k in range(2):
-            print(pred_[k])
             ax[k].plot(frequency, pred_[k], 'r--', label='Predicted {}'.format(rp[k]))    # don't forget the plt.legend()
             ax[k].plot(frequency, simu_[k], 'b--', label='Simulated {}'.format(rp[k]))
             ax[k].legend()
@@ -47,12 +46,12 @@ def fw_visual(simu, pred, frequency, path, epoch):
 
 
 if __name__ == '__main__':
-    cwd = '/home/qinlong/PycharmProjects/NEU/w_b_transfer/b_data/test_results/'
+    cwd = '/home/qinlong/PycharmProjects/NEU/w_b_transfer/b_data/v2/test_results/'
     wavelength = np.linspace(1000, 2000, 200)  # shape: (200,)
     para = ['para' + str(i) for i in range(5)]
     data_point = ['data' + str(i) for i in range(402)]
 
-    EPOCH = 500
+    EPOCH = 1500
 
     simu_data = pd.read_csv(cwd+'epoch_{}/simu_data.csv'.format(EPOCH), header=None, names=para+data_point)
     pred_data = pd.read_csv(cwd+'epoch_{}/pred_data.csv'.format(EPOCH), header=None, names=para+data_point)
