@@ -46,12 +46,12 @@ def fw_visual(simu, pred, frequency, path, epoch):
 
 
 if __name__ == '__main__':
-    cwd = '/home/qinlong/PycharmProjects/NEU/w_b_transfer/b_data/v2/test_results/'
+    cwd = '/home/qinlong/PycharmProjects/NEU/w_b_transfer/b_data/v2/test_results_1/'
     wavelength = np.linspace(1000, 2000, 200)  # shape: (200,)
     para = ['para' + str(i) for i in range(5)]
     data_point = ['data' + str(i) for i in range(402)]
 
-    EPOCH = 1500
+    EPOCH = 2000
 
     simu_data = pd.read_csv(cwd+'epoch_{}/simu_data.csv'.format(EPOCH), header=None, names=para+data_point)
     pred_data = pd.read_csv(cwd+'epoch_{}/pred_data.csv'.format(EPOCH), header=None, names=para+data_point)

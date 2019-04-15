@@ -36,17 +36,17 @@ with tf.Session() as sess:
     x = sess.graph.get_tensor_by_name(x_tensor_name)
     # y = sess.graph.get_tensor_by_name(y_tensor_name)
 
-    connect = sess.graph.get_operation_by_name('fw_net/identical_conv3/relu_3').outputs[0]
-
+    # connect = sess.graph.get_operation_by_name('fw_net/identical_conv3/relu_3').outputs[0]
+    connect = sess.graph.get_operation_by_name('fw_net/t_conv3/relu').outputs[0]
     with tf.name_scope('trans_part'):
         with tf.variable_scope('trans_part'):
-            with tf.variable_scope('t_conv3'):
-                t = ms.t_conv2d(connect, 32, [2, 2], 2)
-                # x = ms.bn(x)
-                t = ms.activation(t, relu=True)
+            # with tf.variable_scope('t_conv3'):
+            #     t = ms.t_conv2d(connect, 32, [2, 2], 2)
+            #     # x = ms.bn(x)
+            #     t = ms.activation(t, relu=True)
 
             with tf.variable_scope('identical_conv4'):
-                t = ms.conv(t, 32, [3, 3])
+                t = ms.conv(connect, 32, [3, 3])
                 # x = ms.bn(x, training=training)
                 t = ms.activation(t, relu=True)
 
@@ -86,8 +86,8 @@ with tf.Session() as sess:
     # summary tensorboard
     train_summary = tf.summary.scalar('Train loss', new_loss)
     test_summary = tf.summary.scalar('Test loss', new_loss)
-    train_writer = tf.summary.FileWriter('./graphs/train', tf.get_default_graph())
-    test_writer = tf.summary.FileWriter('./graphs/test')
+    train_writer = tf.summary.FileWriter('./test_results_1/graphs/train', tf.get_default_graph())
+    test_writer = tf.summary.FileWriter('./test_results_1/graphs/test')
 
     # start train
     epoch = 0
@@ -103,8 +103,8 @@ with tf.Session() as sess:
         # create dirs and store the test results
         if ((it + 1) % (49 * 500)) == 0:
             print('Epoch_{}, Iteration_{}, loss: {}'.format(epoch, it, l))
-            os.makedirs('./test_results/epoch_{}'.format(epoch), exist_ok=True)  # there is no '/' in the last dir
-            os.makedirs('./test_results/epoch_{}'.format(epoch), exist_ok=True)
+            os.makedirs('./test_results_1/epoch_{}'.format(epoch), exist_ok=True)  # there is no '/' in the last dir
+            os.makedirs('./test_results_1/epoch_{}'.format(epoch), exist_ok=True)
             simu_data = np.empty((0, 407))                     # create a empty ndarray shape = (0, ?)
             pred_data = np.empty((0, 407))
 
@@ -121,8 +121,8 @@ with tf.Session() as sess:
                 simu_data = np.concatenate([simu_data, simu_results], axis=0)
                 pred_data = np.concatenate([pred_data, pred_results], axis=0)
 
-            np.savetxt('test_results/epoch_{}/simu_data.csv'.format(epoch), simu_data, delimiter=',')  # don't forget about the delimiter=','
-            np.savetxt('test_results/epoch_{}/pred_data.csv'.format(epoch), pred_data, delimiter=',')
+            np.savetxt('test_results_1/epoch_{}/simu_data.csv'.format(epoch), simu_data, delimiter=',')  # don't forget about the delimiter=','
+            np.savetxt('test_results_1/epoch_{}/pred_data.csv'.format(epoch), pred_data, delimiter=',')
 
 train_writer.close()
 test_writer.close()

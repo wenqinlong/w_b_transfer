@@ -42,7 +42,7 @@ def fw_visual(real, pred, frequency, path):
 
 
 if __name__ == '__main__':
-    cwd = '/home/qinlong/PycharmProjects/NEU/w_b_transfer/w_data/test_results/'
+    cwd = '/home/qinlong/PycharmProjects/NEU/w_b_transfer/w_data/v3/test_results/'
     real_data = pd.read_csv(cwd+'real/real_data.csv', header=None, names=['id']+para+data_point)
     pred_data = pd.read_csv(cwd+'pred/pred_data.csv', header=None, names=['id']+para+data_point)
     fw_visual(real_data, pred_data, freq, cwd)

@@ -6,16 +6,7 @@ def fc(x, units):
     return x
 
 
-def conv1d(x, f, w):
-    x = tf.layers.conv1d(inputs=x, filters=f, kernel_size=w, strides=1, padding='same')
-    return x
-
-
-def t_conv1d(x, f, w, s):
-    x = tf.contrib.nn.conv1d_transpose(inputs=x, filters=f, kernel_size=w, strides=1, paddind='same')
-
-
-def conv2d(x, f, w):
+def conv(x, f, w):
     x = tf.layers.conv2d(inputs=x, filters=f, kernel_size=w, strides=1, padding='same')
     return x
 
